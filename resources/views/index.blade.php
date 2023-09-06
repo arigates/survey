@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>Laravel</title>
 
@@ -28,6 +29,13 @@
 
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>
+    <script>
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+    </script>
 </head>
 
 <body>
@@ -49,7 +57,7 @@
                 <tr>
                     <th data-data="year" data-name="year">Tahun</th>
                     <th data-data="description" data-description="description">Deskripsi</th>
-                    <th style="width: 15%" data-data="action" data-description="action" data-sortable="false">Aksi</th>
+                    <th style="width: 20%" data-data="action" data-description="action" data-sortable="false">Aksi</th>
                 </tr>
                 </thead>
 
@@ -61,8 +69,9 @@
 </div>
 
 <script type="text/javascript">
+    var datatable = null
     $(document).ready(function(){
-        $('#datatable').DataTable({
+        datatable = $('#datatable').DataTable({
             processing: true,
             dom: 'Bfrtip',
             serverSide: true,
@@ -73,6 +82,25 @@
             ],
             iDisplayLength: 50
         })
+    })
+
+    $('#datatable').on('click', '.btn-delete', function () {
+        let id = $(this).data('id')
+
+        let link = '{{ route('survey.delete', ['id' => ':id']) }}'
+        link = link.replace(':id', id)
+
+        let ok = confirm("Yakin ingin menghapus data ini?");
+        if (ok) {
+            $.ajax({
+                type: 'delete',
+                url: link,
+                encode: true,
+                success: function (data, textStatus, xhr) {
+                    datatable.ajax.reload()
+                },
+            });
+        }
     })
 </script>
 </body>

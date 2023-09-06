@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\SurveyController;
-use App\Models\SurveyDetail;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -26,3 +25,4 @@ Route::post('/survey/store', [SurveyController::class, 'store'])->name('survey.s
 Route::get('/survey/{id}/show', [SurveyController::class, 'show'])->name('survey.show');
 Route::get('/survey/{id}/edit', [SurveyController::class, 'edit'])->name('survey.edit');
 Route::post('/survey/{id}/update', [SurveyController::class, 'update'])->name('survey.update');
+Route::delete('/survey/{id}/delete', [SurveyController::class, 'delete'])->name('survey.delete');

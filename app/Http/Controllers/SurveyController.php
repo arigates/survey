@@ -10,7 +10,9 @@ use App\Models\User;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 use Yajra\DataTables\Facades\DataTables;
 
 class SurveyController extends Controller
@@ -28,8 +30,9 @@ class SurveyController extends Controller
             ->addColumn('action', function ($data) {
                 $btnEdit = '<a href="'.route('survey.edit', ['id' => $data->id]).'" class="btn btn-primary btn-sm">Edit</a>';
                 $btnView = '<a href="'.route('survey.show', ['id' => $data->id]).'" class="btn btn-info btn-sm ml-2">View</a>';
+                $btnDelete = '<button data-id="'.$data->id.'" class="btn btn-danger btn-sm ml-2 btn-delete">Hapus</button>';
 
-                return $btnEdit.$btnView;
+                return $btnEdit.$btnView.$btnDelete;
             })
             ->rawColumns(['action'])
             ->make();
@@ -45,31 +48,40 @@ class SurveyController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $survey = Survey::create([
-            'year' => $request->year,
-            'description' => $request->description,
-        ]);
+        DB::beginTransaction();
+        try {
+            $survey = Survey::create([
+                'year' => $request->year,
+                'description' => $request->description,
+            ]);
 
-        $categories = Category::with('details')->get();
-        foreach ($categories as $category) {
-            foreach ($category->details as $categoryDetail) {
-                $surveyDetail = SurveyDetail::create([
-                    'survey_id' => $survey->id,
-                    'category_id' => $category->id,
-                    'category_detail_id' => $categoryDetail->id,
-                ]);
-
-                $selected = $request->selected[$categoryDetail->id] ?? [];
-                foreach ($selected as $selectedUserId) {
-                    SurveyDetailUser::create([
-                        'survey_detail_id' => $surveyDetail->id,
-                        'user_id' => $selectedUserId
+            $categories = Category::with('details')->get();
+            foreach ($categories as $category) {
+                foreach ($category->details as $categoryDetail) {
+                    $surveyDetail = SurveyDetail::create([
+                        'survey_id' => $survey->id,
+                        'category_id' => $category->id,
+                        'category_detail_id' => $categoryDetail->id,
                     ]);
+
+                    $selected = $request->selected[$categoryDetail->id] ?? [];
+                    foreach ($selected as $selectedUserId) {
+                        SurveyDetailUser::create([
+                            'survey_detail_id' => $surveyDetail->id,
+                            'user_id' => $selectedUserId
+                        ]);
+                    }
                 }
             }
-        }
 
-        return response()->json($survey->id);
+            DB::commit();
+
+            return response()->json($survey->id);
+        } catch (Throwable $t) {
+            DB::rollBack();
+
+            return response()->json(null, 400);
+        }
     }
 
     public function show($id): Renderable
@@ -112,31 +124,63 @@ class SurveyController extends Controller
             'description' => $request->description,
         ]);
 
-        // delete old data
-        foreach ($survey->details as $detail) {
-            $detail->users()->detach();
-            $detail->delete();
-        }
+        DB::beginTransaction();
+        try {
+            // delete old data
+            foreach ($survey->details as $detail) {
+                $detail->users()->detach();
+                $detail->delete();
+            }
 
-        $categories = Category::with('details')->get();
-        foreach ($categories as $category) {
-            foreach ($category->details as $categoryDetail) {
-                $surveyDetail = SurveyDetail::create([
-                    'survey_id' => $survey->id,
-                    'category_id' => $category->id,
-                    'category_detail_id' => $categoryDetail->id,
-                ]);
-
-                $selected = $request->selected[$categoryDetail->id] ?? [];
-                foreach ($selected as $selectedUserId) {
-                    SurveyDetailUser::create([
-                        'survey_detail_id' => $surveyDetail->id,
-                        'user_id' => $selectedUserId
+            $categories = Category::with('details')->get();
+            foreach ($categories as $category) {
+                foreach ($category->details as $categoryDetail) {
+                    $surveyDetail = SurveyDetail::create([
+                        'survey_id' => $survey->id,
+                        'category_id' => $category->id,
+                        'category_detail_id' => $categoryDetail->id,
                     ]);
+
+                    $selected = $request->selected[$categoryDetail->id] ?? [];
+                    foreach ($selected as $selectedUserId) {
+                        SurveyDetailUser::create([
+                            'survey_detail_id' => $surveyDetail->id,
+                            'user_id' => $selectedUserId
+                        ]);
+                    }
                 }
             }
-        }
 
-        return response()->json($survey->id);
+            DB::commit();
+
+            return response()->json($survey->id);
+        } catch (Throwable $t) {
+            DB::rollBack();
+
+            return response()->json($survey->id, 400);
+        }
+    }
+
+    public function delete($id): JsonResponse
+    {
+        $survey = Survey::with('details')->findOrFail($id);
+        DB::beginTransaction();
+        try {
+            // delete old data
+            foreach ($survey->details as $detail) {
+                $detail->users()->detach();
+                $detail->delete();
+            }
+
+            $survey->delete();
+
+            DB::commit();
+
+            return response()->json('success');
+        } catch (Throwable $t) {
+            DB::rollBack();
+
+            return response()->json(null, 400);
+        }
     }
 }
