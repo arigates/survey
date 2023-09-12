@@ -19,7 +19,7 @@ class SurveyController extends Controller
 {
     public function index(): Renderable
     {
-        return view("index");
+        return view("survey/index");
     }
 
     public function datatable(): JsonResponse
@@ -43,7 +43,7 @@ class SurveyController extends Controller
         $users = User::get();
         $categories = Category::with('details')->get();
 
-        return view('create')->with(compact('users', 'categories'));
+        return view('survey/create')->with(compact('users', 'categories'));
     }
 
     public function store(Request $request): JsonResponse
@@ -113,7 +113,7 @@ class SurveyController extends Controller
             ->orderBy('category_id')
             ->get();
 
-        return view("edit")->with(compact('users', 'categories', 'survey', 'surveyDetails'));
+        return view("survey/edit")->with(compact('users', 'categories', 'survey', 'surveyDetails'));
     }
 
     public function update(Request $request, $id): JsonResponse
