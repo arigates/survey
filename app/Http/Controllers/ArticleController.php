@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 
 class ArticleController extends Controller
@@ -79,6 +80,19 @@ class ArticleController extends Controller
     public function delete($id): JsonResponse
     {
         $article = Article::findOrFail($id);
+        $pattern = '/<img[^>]+src=["\']([^"\']+)["\'][^>]*>/i';
+
+        if (preg_match_all($pattern, $article->description, $matches)) {
+            $imageLinks = $matches[1];
+            foreach ($imageLinks as $link) {
+                $linkParts = explode('/', $link);
+                $path = $linkParts[4] ?? '';
+                $name = $linkParts[5] ?? '';
+
+                @Storage::disk('local')->delete('/'.$path.'/'.$name);
+            }
+        }
+
         $article->delete();
 
         return response()->json('success');
