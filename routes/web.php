@@ -40,4 +40,4 @@ Route::delete('/article/{id}/delete', [ArticleController::class, 'delete'])->nam
 
 Route::post('/storage/upload', [StorageController::class, 'upload'])->name('storage.upload');
 Route::get('/storage/{path}/{file}', [StorageController::class, 'show'])->name('storage.show');
-Route::delete('/storage/{path}/{file}', [StorageController::class, 'delete'])->name('storage.delete');
+Route::delete('/storage-delete/{path}/{file}', [StorageController::class, 'delete'])->name('storage.delete');

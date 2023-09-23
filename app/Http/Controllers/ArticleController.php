@@ -89,7 +89,7 @@ class ArticleController extends Controller
                 $path = $linkParts[4] ?? '';
                 $name = $linkParts[5] ?? '';
 
-                @Storage::disk('local')->delete('/'.$path.'/'.$name);
+                @Storage::disk('public')->delete('/'.$path.'/'.$name);
             }
         }
 

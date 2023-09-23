@@ -44,7 +44,7 @@ class StorageController extends Controller
 
     public function delete(Request $request): JsonResponse
     {
-        Storage::disk('local')->delete('/'.$request->path.'/'.$request->file);
+        Storage::disk('public')->delete('/'.$request->path.'/'.$request->file);
 
         return response()->json(['message' => 'Delete image berhasil']);
     }

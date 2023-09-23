@@ -13,13 +13,13 @@ trait UploadImageTrait
         $loginUser = auth()->user()->id ?? rand();
         $extension = $file->getClientOriginalExtension();
         $imageName = Carbon::now()->timestamp . '_' . uniqid(). '_' . $loginUser . '.' . $extension;
-        Storage::disk('local')->put($path . '/'. $imageName, Image::make($file)->encode($extension));
+        Storage::disk('public')->put($path . '/'. $imageName, Image::make($file)->encode($extension));
         foreach ($dimensions as $dimension) { // resize & upload thumbnail image
             $resizeImage  = Image::make($file)->resize($dimension, null, function($constraint) {
                 $constraint->aspectRatio();
             })->encode($extension);
 
-            Storage::disk('local')->put($path .'/'. $dimension . '/' .$imageName, $resizeImage );
+            Storage::disk('public')->put($path .'/'. $dimension . '/' .$imageName, $resizeImage );
         }
 
         return $imageName;

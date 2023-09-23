@@ -143,10 +143,18 @@
         });
     }
 
-    function deleteFile(path) {
+    function deleteFile(fileUrl) {
+        let link = '{{ route('storage.delete', ['path' => ':path', 'file' => ':file']) }}'
+        let paths = fileUrl.split('/')
+        let path = paths[paths.length - 2] ?? ''
+        let file = paths[paths.length - 1] ?? ''
+
+        link = link.replace(':path', path)
+        link = link.replace(':file', file)
+
         $.ajax({
             type: 'DELETE',
-            url: path,
+            url: link,
             dataType: "json",
             encode: true,
             success: function (data, textStatus, xhr) {
